@@ -21,7 +21,7 @@ graph TD
     subgraph S_GEN_1
         A["定义测试代码生成的 Signature"] --> B["提供 5 个正确测试用例作为 Trainset"]
         B --> C["Teleprompter 优化器自动生成最佳 Prompt 权重"]
-        C --> D("(编译出高质量的代码生成模块 (Compiled Module")))
+        C --> D["编译出高质量的代码生成模块 (Compiled Module)"]
     end
 
     subgraph S_GEN_2
