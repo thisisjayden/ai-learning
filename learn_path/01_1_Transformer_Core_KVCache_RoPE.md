@@ -87,12 +87,12 @@ $$ \text{Size} = 2 \times 2 \times \text{layers} \times \text{hidden\_size} \tim
 graph LR
     subgraph Q3["位置 3 的 Query (Q)"]
         A["获取词向量 Q"] --> B["乘以复数进行顺时针旋转 30 度"]
-        B --> C(("Q_rot: 带绝对位置的 Q"))
+        B --> C("("Q_rot: 带绝对位置的 Q""))
     end
     
     subgraph K5["位置 5 的 Key (K)"]
         D["获取词向量 K"] --> E["乘以复数进行顺时针旋转 50 度"]
-        E --> F(("K_rot: 带绝对位置的 K"))
+        E --> F("("K_rot: 带绝对位置的 K""))
     end
     
     C --> G{"计算 Attention: Q_rot 和 K_rot 的内积"}

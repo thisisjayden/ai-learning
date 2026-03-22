@@ -18,15 +18,15 @@
 
 ```mermaid
 graph TD
-    subgraph "1. 数据预处理与层级分块 (Indexing Pipeline)"
+    subgraph S_GEN ["["1. 数据预处理与层级分块 (Indexing Pipeline)"]"]
         A["长篇 PDF 财报"] --> B["版面解析 (提取 Markdown)"]
         B --> C["层级分块: 切分出大段落 Parent Node"]
         C --> D["将 Parent 切分为单句 Child Node"]
         D --> E{"建立映射: Child 关联 Parent ID"}
-        E --> F["分别将 Child Node 存入 VectorDB(向量库) 和 KeywordDB(倒排库)"]
+        E --> F["分别将 Child Node 存入 VectorDB("向量库") 和 KeywordDB("倒排库")"]
     end
 
-    subgraph "2. 混合召回与精排 (Retrieval & Reranking Pipeline)"
+    subgraph S_GEN ["["2. 混合召回与精排 (Retrieval & Reranking Pipeline)"]"]
         G["用户提问: Q3 季度 SKU-A92 的毛利率是多少？"] --> H["双路并行召回"]
         H --> I["Dense 检索 (基于语义) 获取 Top 20"]
         H --> J["BM25 检索 (基于关键词匹配 SKU-A92) 获取 Top 20"]
@@ -37,11 +37,11 @@ graph TD
         M --> N["根据父子映射，揪出这 3 个 Child 对应的完整 Parent Node!"]
     end
 
-    subgraph "3. 生成与自动评估 (Generation & Evaluation)"
+    subgraph S_GEN ["["3. 生成与自动评估 (Generation & Evaluation)"]"]
         N --> O["将完整的大段落上下文 + 问题 喂给 GPT-4"]
         O --> P["生成最终精准财报答案"]
-        P -. 将结果扔进评估队列 .-> Q
-        Q["使用 RAGAS 裁判大模型, 评估答案的 Faithfulness(无幻觉) 和 Precision(高精度)"]
+        P -. "将结果扔进评估队列" .-> Q
+        Q["使用 RAGAS 裁判大模型, 评估答案的 Faithfulness("无幻觉") 和 Precision("高精度")"]
     end
 ```
 

@@ -18,13 +18,13 @@
 
 ```mermaid
 graph TD
-    subgraph "DSPy 离线编译阶段 (Offline Compilation)"
+    subgraph S_GEN ["["DSPy 离线编译阶段 (Offline Compilation)"]"]
         A["定义测试代码生成的 Signature"] --> B["提供 5 个正确测试用例作为 Trainset"]
         B --> C["Teleprompter 优化器自动生成最佳 Prompt 权重"]
-        C --> D(("编译出高质量的代码生成模块 (Compiled Module)"))
+        C --> D("("编译出高质量的代码生成模块 (Compiled Module")"))
     end
 
-    subgraph "在线推理阶段 (Online Inference - 带 KV Cache 感知)"
+    subgraph S_GEN ["["在线推理阶段 (Online Inference - 带 KV Cache 感知)"]"]
         D --> E["用户输入需求：写一个二分查找的测试用例"]
         E --> F["LLM 第 1 次生成代码 (Prefill 全量历史, KV Cache 落盘)"]
         F --> G["沙盒执行代码进行验证"]
@@ -35,7 +35,7 @@ graph TD
         H -- "是" --> J["获取沙盒报错栈 Traceback"]
         J --> K["拼接：报错信息 + 请求修复指令"]
         K --> L["LLM 第 2 次生成 (此时利用刚才的 KV Cache，只需计算新输入报错信息的 QKV，极大降低延迟)"]
-        L -. 回到沙盒重新执行 .-> G
+        L -. "回到沙盒重新执行" .-> G
     end
 ```
 
