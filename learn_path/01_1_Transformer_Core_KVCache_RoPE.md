@@ -25,22 +25,22 @@
 
 ```mermaid
 graph TD
-    subgraph Prefill [Prefill 阶段:首次处理 Prompt]
-        A[输入: 我今天去买了一个] --> B(计算这 7 个词的 Q, K, V)
-        B --> C{将 K, V 保存进 KV Cache 显存}
-        B --> D[计算 Attention 并生成结果]
-        D --> E[输出词: 苹果]
+    subgraph Prefill["Prefill 阶段 (首次处理 Prompt)"]
+        A["输入：我今天去买了一个"] --> B["计算这 7 个词的 Q, K, V"]
+        B --> C{"将 K, V 保存进 KV Cache 显存"}
+        B --> D["计算 Attention 并生成结果"]
+        D --> E["输出词：苹果"]
     end
 
-    subgraph Decode [Decode 阶段:自回归逐字生成]
-        E --> F[下一轮输入: 苹果]
-        F --> G(仅计算 苹果 的 Q, K, V)
-        G --> H{将 苹果 的 K, V 追加到 KV Cache}
+    subgraph Decode["Decode 阶段 (自回归逐字生成)"]
+        E --> F["下一轮输入：苹果"]
+        F --> G["仅计算『苹果』的 Q, K, V"]
+        G --> H{"将『苹果』的 K, V 追加到 KV Cache"}
         
-        C -.-> I(读取历史 K, V)
+        C -.-> I["读取历史 K, V"]
         H -.-> I
-        I --> J[当前 Q × 历史 K, V 计算 Attention]
-        J --> K[输出词: 。]
+        I --> J["当前 Q 与历史 K, V 计算 Attention"]
+        J --> K["输出词：。"]
     end
 ```
 
@@ -85,24 +85,21 @@ $$ \text{Size} = 2 \times 2 \times \text{layers} \times \text{hidden\_size} \tim
 > **原理解析图：通过旋转向量实现相对位置编码**
 ```mermaid
 graph LR
-    subgraph Q3 [位置 3 的 Query Q]
-        A(获取词向量 Q) --> B[乘以复数进行顺时针旋转 30°]
-        B --> C((Q_rot: 带有绝对位置信息的 Q))
+    subgraph Q3["位置 3 的 Query (Q)"]
+        A["获取词向量 Q"] --> B["乘以复数进行顺时针旋转 30 度"]
+        B --> C(("Q_rot: 带绝对位置的 Q"))
     end
     
-    subgraph K5 [位置 5 的 Key K]
-        D(获取词向量 K) --> E[乘以复数进行顺时针旋转 50°]
-        E --> F((K_rot: 带有绝对位置信息的 K))
+    subgraph K5["位置 5 的 Key (K)"]
+        D["获取词向量 K"] --> E["乘以复数进行顺时针旋转 50 度"]
+        E --> F(("K_rot: 带绝对位置的 K"))
     end
     
-    C --> G{计算 Attention: Q_rot 和 K_rot 的内积}
+    C --> G{"计算 Attention: Q_rot 和 K_rot 的内积"}
     F --> G
     
-    G --> H[数学等价于原始 Q 和 K 的内积, 再乘以 20° 的相对旋转差值!]
-    H --> I[模型成功感知到这两个词相差 2 个位置]
-    
-    classDef highlight fill:#f9f,stroke:#333,stroke-width:2px;
-    class G highlight;
+    G --> H["等价于原始 Q 和 K 的内积, 再乘以 20 度的旋转差值"]
+    H --> I["模型成功感知到这两个词相差 2 个位置"]
 ```
 
 RoPE 的核心思想是：**通过在复数平面上“旋转”词向量来注入绝对位置信息，而这两个词向量做内积（算注意力）时，神奇地只与它们的“相对位置（旋转角度的差值）”有关。**
