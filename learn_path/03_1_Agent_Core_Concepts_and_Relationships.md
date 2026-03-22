@@ -174,7 +174,30 @@ def compile_prompt(persona, skills, instruction, memory):
 
 ---
 
-## 6. 小结与进阶引申
+
+## 6. 高级架构师必修：Agent 核心组件开发的行业最佳实践
+
+要在生产环境中写出“高可用、不翻车”的代码，你必须遵循以下被大厂验证过的 Best Practices（最佳实践）：
+
+### 💡 6.1 开发 Skills / Function Calling 的最佳实践
+- **代码注释就是 JSON Schema**：大模型根本看不到你 Python 函数里的代码逻辑，它只能看到你的函数名（Name）、参数类型（Type Hints）和文档字符串（Docstring）。因此，**不要用 `def func1(a):`，必须写成 `def search_company_financials(company_name: str) -> str:`**，并且配上详尽无比的 Docstring，告诉大模型这个工具什么时候用、不能什么时候用。
+- **让错误“返回”而不是“崩溃”**：如果你的工具函数连接数据库失败了，千万不要 `raise Exception` 让整个程序崩溃！你应该 `return "Error: 数据库连接失败，请尝试使用 get_cached_data 工具"`。这样大模型收到错误信息后，才会触发自我纠错（Reflexion）去尝试其他方法。
+- **参数要尽可能的少且简单**：大模型非常不擅长生成包含深度嵌套的 JSON 或包含十几个参数的复杂结构。如果一个工具需要太多参数，最好把它拆分成两个小工具。
+
+### 💡 6.2 开发 Instructions 的最佳实践
+- **设定绝对的边界与格式**：老板下发指令时，与其说“帮我查一下苹果股价”，不如说“你的唯一任务是查询苹果股价。绝对不能包含免责声明。请直接返回数字”。**强约束（Constraints）** 是对抗模型幻觉和废话的唯一解。
+- **System Prompt 和 User Prompt 的物理隔离**：绝对不要把系统级的人设和安全红线跟用户的提问混在一个字符串里。必须严格放在 `role: "system"` 里，用户的指令放在 `role: "user"` 里，防止黑客通过用户输入注入指令（Prompt Injection）。
+
+### 💡 6.3 开发 Agent 的最佳实践
+- **摒弃“全能神 Agent (God Agent)”**：不要试图写一个拥有 50 个工具、能写代码能查财报还能画画的超级 Agent。这会让模型在选择工具时产生极高的注意力涣散和幻觉。
+- **走向微服务化 (Micro-Agents)**：遵循单一职责原则。写一个只会查数据的 Agent，一个只会写报告的 Agent，然后用一个主管（Supervisor）把它们编排起来。
+
+### 💡 6.4 部署 MCP (Model Context Protocol) 协议的最佳实践
+- **Server 无状态化 (Stateless)**：MCP Server 只是提供工具和数据的 API 接口，千万不要在 Server 里保存关于某个用户今天聊了什么的记忆（Memory）。记忆必须由连接它的客户端 Agent 来维护。
+- **最小权限原则 (Least Privilege)**：如果你写了一个 MCP Server 来连接公司的核心数据库，它暴露出来的工具绝对不能是 `execute_raw_sql`（执行原生 SQL）。你应该暴露 `get_user_info_by_id` 这种封装好、无破坏性的只读接口，防止大模型抽风把数据库给 DROP 掉。
+
+
+## 7. 小结与进阶引申
 - **不要把 Instruction 当 Prompt 写**：给 Agent 下发 Instruction 时，要像对人说话一样清晰具体（比如限定输出格式、划定红线），不要在 Instruction 里啰嗦地教它怎么用工具，因为工具（Skill）的用法已经在 Skill 的定义（Schema 和 Docstring）里写好了，框架会自动把它编入 Prompt 中。
 - **Agent 的能力上限取决于 Skills 的丰富度**，而 **Agent 的智商下限取决于 LLM 的推理能力和 Prompt 渲染模板的合理性**。
 
