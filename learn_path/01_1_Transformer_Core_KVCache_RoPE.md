@@ -26,21 +26,21 @@
 ```mermaid
 graph TD
     subgraph Prefill [Prefill 阶段:首次处理 Prompt]
-        A[输入: "我今天去买了一个"] --> B(计算这 7 个词的 Q, K, V)
+        A[输入: 我今天去买了一个] --> B(计算这 7 个词的 Q, K, V)
         B --> C{将 K, V 保存进 KV Cache 显存}
         B --> D[计算 Attention 并生成结果]
-        D --> E[输出词: "苹果"]
+        D --> E[输出词: 苹果]
     end
 
     subgraph Decode [Decode 阶段:自回归逐字生成]
-        E --> F[下一轮输入: "苹果"]
+        E --> F[下一轮输入: 苹果]
         F --> G(仅计算 "苹果" 的 Q, K, V)
         G --> H{将 "苹果" 的 K, V 追加到 KV Cache}
         
         C -.-> I(读取历史 K, V)
         H -.-> I
         I --> J[当前 Q × 历史 K, V 计算 Attention]
-        J --> K[输出词: "。"]
+        J --> K[输出词: 。]
     end
 ```
 
