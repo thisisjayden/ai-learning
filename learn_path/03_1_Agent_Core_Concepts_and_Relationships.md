@@ -48,34 +48,34 @@
 
 ```mermaid
 graph TD
-    subgraph 1. ["上层业务输入"]
-        A["Instruction (任务指令): 帮我查一下今天苹果公司的股价并写一份简报"]
-        B["Agent Persona (人设基座): 你是一个严谨的金融分析师"]
+    subgraph 1. 上层业务输入
+        A["Instruction (任务指令): 帮我查一下今天苹果公司的股价并写一份简报]
+        B["Agent Persona (人设基座): 你是一个严谨的金融分析师]
     end
 
-    subgraph 2. ["中间件系统架构 (Agent Core)"]
-        C["Agent (智能体控制节点)"]
+    subgraph 2. 中间件系统架构 (Agent Core)
+        C["Agent (智能体控制节点)]
         
         A --> C
         B --> C
         
-        D["Skills/Tools (技能库)"]
-        D1["Skill 1: Web_Search (获取实时网页)"] --> D
-        D2["Skill 2: Calculator (计算涨跌幅)"] --> D
-        D3["Skill 3: File_Writer (保存简报文件)"] --> D
+        D["Skills/Tools (技能库)]
+        D1["Skill 1: Web_Search (获取实时网页)] --> D
+        D2["Skill 2: Calculator (计算涨跌幅)] --> D
+        D3["Skill 3: File_Writer (保存简报文件)] --> D
         
         D -->|提取技能的描述和参数 Schema| C
         
-        E["Memory (记忆库)"]
-        E1["历史对话: 昨天股价是 170 美元"] --> E
+        E["Memory (记忆库)]
+        E1["历史对话: 昨天股价是 170 美元] --> E
         
         E -->|提取上下文| C
     end
 
-    subgraph 3. ["底层大模型调用 (The LLM)"]
-        C -->|将人设、指令、历史、技能字典拼接/编译| F["Prompt (发给大模型的超级大字符串)"]
-        F --> G["LLM (大语言模型)"]
-        G --> H["输出 Thought (思考过程) 与 Action (决定调用哪个 Skill)"]
+    subgraph 3. 底层大模型调用 (The LLM)
+        C -->|将人设、指令、历史、技能字典拼接/编译| F["Prompt (发给大模型的超级大字符串)]
+        F --> G["LLM (大语言模型)]
+        G --> H["输出 Thought (思考过程) 与 Action (决定调用哪个 Skill)]
         H -. "执行结果再循环给 Agent" .-> C
     end
 ```

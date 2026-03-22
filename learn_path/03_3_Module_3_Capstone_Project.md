@@ -18,21 +18,21 @@
 
 ```mermaid
 graph TD
-    subgraph S_GEN ["["全局状态黑板 (Global State)"]"]
-        S["messages: 历史对话流, next: 下一个上场的人, sender: 刚刚发言的人"]
+    subgraph S_GEN [全局状态黑板 (Global State)]
+        S["messages: 历史对话流, next: 下一个上场的人, sender: 刚刚发言的人]
     end
 
-    subgraph S_GEN ["["人类入口"]"]
-        User["老板派发 Instruction: 帮我写个 HackerNews 爬虫"]
+    subgraph S_GEN [人类入口]
+        User["老板派发 Instruction: 帮我写个 HackerNews 爬虫]
     end
 
-    subgraph S_GEN ["["Multi-Agent 路由枢纽"]"]
+    subgraph S_GEN [Multi-Agent 路由枢纽]
         Supervisor{"👨‍💼 主管 Agent\\n("负责看上下文，决定下一步让谁干活，或者宣布任务 FINISH")"}
     end
 
-    subgraph S_GEN ["["具有专属 Skills 的工人 Agents"]"]
-        Researcher["🕵️‍♂️ 调查员 Agent\\nSkills: Web_Search\\n目标: 搜寻外部 API 资料"]
-        Coder["👨‍💻 程序员 Agent\\nSkills: File_Write, Python_Exec\\n目标: 编写代码并存盘运行"]
+    subgraph S_GEN [具有专属 Skills 的工人 Agents]
+        Researcher["🕵️‍♂️ 调查员 Agent\\nSkills: Web_Search\\n目标: 搜寻外部 API 资料]
+        Coder["👨‍💻 程序员 Agent\\nSkills: File_Write, Python_Exec\\n目标: 编写代码并存盘运行]
     end
 
     User -->|初始化状态| Supervisor
