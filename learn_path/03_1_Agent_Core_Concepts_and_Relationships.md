@@ -42,47 +42,80 @@
 
 ---
 
-## 3. 架构图解：这四个概念是如何协同工作的？
+
+## 3. 智能体的“手脚”是如何运作的？—— Function Calling 与 MCP 协议
+
+在理清了概念之后，最令人困惑的问题是：大模型明明只能“输出文本”，它是怎么去“查数据库”或者“写本地文件”的呢？
+
+### 3.1 从魔法到现实：Function Calling (函数调用)
+这是目前所有 Agent 能够执行任务的底层技术支柱。
+**大模型绝对不会自己去执行代码！** 它只是一个“懂业务的规划师”。
+
+**Function Calling 的完整闭环**：
+1. **注入描述 (Schema)**：我们将 Skill（比如搜网页）的名称、用途、参数要求转换成 JSON Schema 格式，拼接到发送给大模型的请求中。
+2. **大模型决策 (Thought)**：大模型阅读了 Instruction，发现需要查网页，于是它**停止生成普通的自然语言对话**，转而输出一段特定的 JSON 格式数据：`{"name": "web_search", "arguments": {"query": "苹果股价"}}`。
+3. **框架拦截与执行 (Action)**：本地代码框架（如 LangChain 或你自己写的脚本）拦截到了这段 JSON，发现模型想调用工具。于是框架在你本地的机器上，真正地执行了 `web_search("苹果股价")` 这个 Python 函数。
+4. **回传结果 (Observation)**：框架拿到搜索结果（比如 "170美元"），把这个结果拼接成一条系统消息，再次发送给大模型。
+5. **模型总结 (Final Answer)**：大模型看到了返回的结果，最终用人类语言输出：“根据我刚刚的查询，今天苹果公司的股价是 170 美元。”
+
+### 3.2 走向未来的终极形态：MCP (Model Context Protocol) 架构
+
+**当前的痛点**：
+你看上一节的架构，所有的 Skill（工具函数）都必须**硬编码写死**在你的 Agent 项目代码里。如果你的 Agent 想操作 GitHub，你得写 GitHub 的 Python 封装；想操作飞书文档，你得写飞书 API 封装。而且 OpenAI 的格式和 Anthropic 的格式还不一样！
+
+**破局者：MCP (Model Context Protocol)**
+由 Anthropic 主导开源的 MCP 协议，旨在成为 AI 应用界的“USB-C 接口”。它的核心思想是**将“大脑 (LLM Client)”和“手脚/记忆库 (Tools/Data Servers)”彻底物理隔离**。
+
+- **MCP Server (资源提供方)**：你可以单独跑一个专门控制 GitHub 的进程（作为服务器），它对外暴露一组标准的“增删改查”工具和资源列表。
+- **MCP Client (智能体应用)**：你的 Agent 不需要再本地写任何 GitHub API 逻辑。它只需要通过网络或本地管道连接到这个 MCP Server。
+- **动态发现 (Discovery)**：Agent 连接上后，MCP Server 会告诉 Agent：“嗨，我这里有 5 个操作 GitHub 的工具（Tools），还有 10 份可以直接读取的本地文档资源（Resources），格式如下。”
+- **无缝执行**：当大模型决定调用工具时，Agent 客户端将参数打包发给 MCP Server，Server 在它自己的沙盒里执行并返回结果。
+
+> **高级架构师视角**：
+> MCP 彻底改变了 Agent 的部署方式。未来，每个企业不需要让大模型去硬连几百个数据库密码。企业只需要在内网部署一个个功能单一、权限隔离的 **MCP Server**（比如 HR 数据 Server、财务审批 Server）。员工电脑上的通用大模型客户端（如 Cursor、Claude Desktop）只要连上这些 Server，就能瞬间获得这些能力。这就是 Agent 走向企业级安全的终极架构！
+
+
+## 4. 架构图解：这四个概念是如何协同工作的？
 
 > **流程图：从 Instruction 到 Prompt 的系统渲染流转**
 
 ```mermaid
 graph TD
-    subgraph 1 [1]
+    subgraph S_GEN_1 [上层业务输入]
         A["Instruction (任务指令): 帮我查一下今天苹果公司的股价并写一份简报"]
         B["Agent Persona (人设基座): 你是一个严谨的金融分析师"]
     end
 
-    subgraph 2 [2]
-        C["Agent (智能体控制节点)"]
+    subgraph S_GEN_2 [中间件系统架构 Agent Client]
+        C["Agent 控制枢纽"]
         
         A --> C
         B --> C
         
-        D["Skills/Tools (技能库)"]
-        D1["Skill 1: Web_Search (获取实时网页)"] --> D
-        D2["Skill 2: Calculator (计算涨跌幅)"] --> D
-        D3["Skill 3: File_Writer (保存简报文件)"] --> D
-        
-        D -->|提取技能的描述和参数 Schema| C
-        
-        E["Memory (记忆库)"]
-        E1["历史对话: 昨天股价是 170 美元"] --> E
-        
-        E -->|提取上下文| C
+        D["本地硬编码 Skills"]
+        D1["File_Writer (保存简报文件)"] --> D
+        D -->|提取技能 Schema| C
     end
 
-    subgraph 3 [3]
-        C -->|将人设、指令、历史、技能字典拼接/编译| F["Prompt (发给大模型的超级大字符串)"]
+    subgraph S_GEN_3 [独立的 MCP Server 生态]
+        E["外部 MCP Server (如: 财经数据接口进程)"]
+        E1["工具: Web_Search_Tool"] -.-> E
+        E2["资源: 历史财报 PDF"] -.-> E
+        
+        E <== "动态暴露 Tools/Resources Schema 并执行调用" ==> C
+    end
+
+    subgraph S_GEN_4 [底层大模型 Function Calling]
+        C -->|将人设、指令、所有本地与 MCP 技能的 JSON Schema 编译发送| F["Prompt + Tools Schema"]
         F --> G["LLM (大语言模型)"]
-        G --> H["输出 Thought (思考过程) 与 Action (决定调用哪个 Skill)"]
-        H -. "执行结果再循环给 Agent" .-> C
+        G --> H["Function Calling: 放弃输出纯文本, 转而输出 {name: Web_Search, args: {query: 苹果股价}}"]
+        H -. "框架拦截 JSON, 请求对应的 Skill/MCP 执行" .-> C
     end
 ```
 
 ---
 
-## 4. 源码级实操剖析：看看 Prompt 是怎么被“拼接”出来的
+## 5. 源码级实操剖析：看看 Prompt 是怎么被“拼接”出来的
 
 很多初学者觉得“写 Agent 就是写 Prompt”。
 **高级工程师的顿悟**：在生产级的框架（如 LangChain/OpenClaw/Auto-GPT）中，开发者**极少**直接写那种几千字的长篇 Prompt。我们写的是 Instruction，配上 Skills，框架会在底层自动帮我们渲染出 Prompt。
@@ -141,7 +174,7 @@ def compile_prompt(persona, skills, instruction, memory):
 
 ---
 
-## 5. 小结与进阶引申
+## 6. 小结与进阶引申
 - **不要把 Instruction 当 Prompt 写**：给 Agent 下发 Instruction 时，要像对人说话一样清晰具体（比如限定输出格式、划定红线），不要在 Instruction 里啰嗦地教它怎么用工具，因为工具（Skill）的用法已经在 Skill 的定义（Schema 和 Docstring）里写好了，框架会自动把它编入 Prompt 中。
 - **Agent 的能力上限取决于 Skills 的丰富度**，而 **Agent 的智商下限取决于 LLM 的推理能力和 Prompt 渲染模板的合理性**。
 

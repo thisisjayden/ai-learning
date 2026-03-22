@@ -76,9 +76,18 @@ class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], operator.add]
     next: str  # 记录 Supervisor 决定的下一个上场节点名
 
+
 # =========================================================
-# 知识点 2: 定义 Skills (工具库)
+# 知识点 2: 定义 Skills (工具库) 与 Function Calling 机制
+# 这里的 @tool 装饰器底层做的事情：自动把 Python 函数的类型注解（如 `query: str`）和 docstring 
+# 转换成了 OpenAI 的 JSON Schema！然后附带在 Prompt 里发送。大模型在返回时，
+# 会停止输出自然语言，而是返回一个包含 `name: "web_search"` 的 JSON 格式结构。
+# 
+# 进阶思考 (MCP 协议化)：
+# 如果你使用了 MCP 架构，那么下面这两个函数就不需要写在 Agent 的代码里了。
+# 你可以单独起一个 MCP Server，让 Agent 客户端直接通过 STDIO 或 SSE 连接，获取这两个能力！
 # =========================================================
+
 from langchain_core.tools import tool
 
 @tool("web_search")
@@ -192,12 +201,13 @@ if __name__ == "__main__":
     })
 ```
 
+
 ## 3. 实操交付物验收标准
 当你在终端运行这份完整架构的代码时，你需要观察和验收以下流转日志：
 1. **主管首次派活**：Supervisor 读取了你的需求，发现需要查 HackerNews API，于是把 `next` 设置为了 `Researcher`。
-2. **技能调用与传参**：Researcher 被唤醒，它脑子里闪过了自己的 `web_search_skill` 说明书，决定调用这个工具。你会在后台日志看到大模型吐出了精确的函数参数请求。
-3. **状态黑板的传递**：Researcher 查到 API 后，将结果汇报在 State 记录里，流程打回给 Supervisor。Supervisor 看了觉得可以了，于是把活派给 `Coder`。
-4. **代码落盘验证**：Coder 读取了前面的 API 资料（State 中的 Memory 上下文），生成了正确的请求代码，并调用了 `write_file_skill`。你在本地目录立刻发现多出了一个可运行的 `hn_scraper.py` 文件。
+2. **Function Calling (技能调用) 与传参**：Researcher 被唤醒，它脑子里闪过了自己的 `web_search_skill` JSON Schema。它停止说废话，转而输出了一个 **Tool Call (函数调用) 请求**。你会在后台日志看到大模型吐出了精确的参数（如 `{"query": "HackerNews API URL"}`）。
+3. **状态黑板的传递**：本地框架拦截了这个 Tool Call，在你的电脑上真实地发起了网络请求。Researcher 拿到返回的真实文本后，将结果汇报在 State 记录里，流程打回给 Supervisor。Supervisor 看了觉得可以了，于是把活派给 `Coder`。
+4. **代码落盘验证**：Coder 读取了前面的 API 资料（State 中的 Memory 上下文），生成了正确的请求代码，并输出了调用 `write_file_skill` 的 JSON 参数。本地框架拦截执行后，你在目录下立刻发现多出了一个可运行的 `hn_scraper.py` 文件。
 5. **任务闭环**：Supervisor 再次视察，发现代码已经写入完毕，任务达成，直接宣布 `FINISH`，程序优雅退出。
 
-> **模块三综合总结**：通过将底层组件（Agent/Skill/Prompt）与顶层架构编排（LangGraph/状态黑板）完美融合，我们不仅写出了自动化脚本，更是在代码里经营了一家高运转效能的**虚拟极客公司**。这，就是大模型时代顶尖应用架构师的必修课！
+> **模块三综合总结**：通过将底层组件（Agent/Skill/Prompt）、底层调用机制（Function Calling / 未来的 MCP 协议）与顶层架构编排（LangGraph/状态黑板）完美融合，我们不仅写出了自动化脚本，更是在代码里经营了一家高运转效能的**虚拟极客公司**。这，就是大模型时代顶尖应用架构师的必修课！
