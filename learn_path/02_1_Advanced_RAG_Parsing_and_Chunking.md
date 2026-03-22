@@ -29,18 +29,18 @@
 
 ```mermaid
 graph TD
-    A["企业级复杂 PDF (带表格/双栏/图片)] --> B["版面分析 (Layout Detection 模型如 YOLOX)]
-    B --> C["识别出不同的区块: 标题、段落、表格、图片]
+    A["企业级复杂 PDF (带表格/双栏/图片)"] --> B["版面分析 (Layout Detection 模型如 YOLOX)"]
+    B --> C["识别出不同的区块: 标题、段落、表格、图片"]
     
-    C -- "对于段落文本" --> D["按真实的阅读顺序(Reading Order)合并]
-    C -- "对于密集表格" --> E["调用 Table Transformer 模型]
-    C -- "对于图片" --> F["调用 VLM (视觉大模型) 生成图片描述摘要]
+    C -- "对于段落文本" --> D["按真实的阅读顺序(Reading Order)合并"]
+    C -- "对于密集表格" --> E["调用 Table Transformer 模型"]
+    C -- "对于图片" --> F["调用 VLM (视觉大模型) 生成图片描述摘要"]
     
-    D --> G["转换为干净的 Markdown 文本]
-    E --> G["转换为 Markdown Table 格式]
-    F --> G["把图片摘要作为文本插入文档流]
+    D --> G["转换为干净的 Markdown 文本"]
+    E --> G["转换为 Markdown Table 格式"]
+    F --> G["把图片摘要作为文本插入文档流"]
     
-    G --> H["进入下一步: 文本分块 (Chunking)]
+    G --> H["进入下一步: 文本分块 (Chunking)"]
 ```
 
 **工程实现提示**：
@@ -67,18 +67,18 @@ graph TD
 
 ```mermaid
 graph TD
-    subgraph S_GEN [索引阶段 (Indexing)]
-        A["长文档 (比如: 公司全员信)] --> B["切分成大块 Parent Chunk (如: 薪酬调整章节)]
-        B --> C["进一步切分为小块 Child Chunks (句1, 句2, 句3)]
+    subgraph S_GEN_1 [索引阶段 (Indexing)]
+        A["长文档 (比如: 公司全员信)"] --> B["切分成大块 Parent Chunk (如: 薪酬调整章节)"]
+        B --> C["进一步切分为小块 Child Chunks (句1, 句2, 句3)"]
         C --> D{"只把 Child Chunks 向量化存入 Vector DB"}
         B --> E{"将 Parent Chunk 存入文档数据库, 并建立父子映射"}
     end
 
-    subgraph S_GEN [检索阶段 (Retrieval)]
-        F["用户提问: 销售部门的底薪怎么调？] --> G["向量检索比对]
-        G -. "命中相似度极高的小块" .-> H["Child Chunk 2: 销售底薪上涨10%]
-        H --> I["通过映射 ID，查找到完整的 Parent Chunk]
-        I --> J["大模型最终看到的上下文: 整个薪酬调整章节的完整背景]
+    subgraph S_GEN_2 [检索阶段 (Retrieval)]
+        F["用户提问: 销售部门的底薪怎么调？"] --> G["向量检索比对"]
+        G -. "命中相似度极高的小块" .-> H["Child Chunk 2: 销售底薪上涨10%"]
+        H --> I["通过映射 ID，查找到完整的 Parent Chunk"]
+        I --> J["大模型最终看到的上下文: 整个薪酬调整章节的完整背景"]
     end
 ```
 

@@ -36,20 +36,20 @@ $$ \text{RRF\_Score} = \frac{1}{k + \text{Rank}_{\text{dense}}} + \frac{1}{k + \
 
 ```mermaid
 graph TD
-    A["用户提问: 查询 SKU-10924 的参数] --> B["并行检索机制]
+    A["用户提问: 查询 SKU-10924 的参数"] --> B["并行检索机制"]
     
-    B --> C["Dense 向量检索 (找语义相关) Top 20]
-    B --> D["Sparse BM25 检索 (找精准编号) Top 20]
+    B --> C["Dense 向量检索 (找语义相关) Top 20"]
+    B --> D["Sparse BM25 检索 (找精准编号) Top 20"]
     
     C --> E{"RRF 算法排名融合"}
     D --> E
     
-    E --> F["粗排结果: 合并后的 Top 20 候选文档]
+    E --> F["粗排结果: 合并后的 Top 20 候选文档"]
     
-    F --> G["传入 Cross-Encoder Reranker 模型进行深度打分]
+    F --> G["传入 Cross-Encoder Reranker 模型进行深度打分"]
     
-    G --> H["截断提取 Top 3 最精确文档]
-    H --> I["作为最终 Context 喂给 LLM 大模型生成回答]
+    G --> H["截断提取 Top 3 最精确文档"]
+    H --> I["作为最终 Context 喂给 LLM 大模型生成回答"]
 ```
 
 ---
