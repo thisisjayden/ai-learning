@@ -17,7 +17,7 @@
 
 ## 2. 结合 Copilot 的核心组件开发实战指南
 
-### 2.1 高效开发 Skills / Function Calling 
+### 2.1 高效开发 LangChain 风格的 Skills 工具库 
 > **目标**：让 Copilot 帮你生成完美的 JSON Schema 注释。
 
 **实操方法 (Copilot Prompt / 注释引导)**：
@@ -131,6 +131,87 @@ def get_user_orders(user_id: str, limit: int = 5) -> str:
 *💡 **最佳实践总结***：Copilot 会自动帮你补全异常捕获（`try-except-finally`）和参数化查询（防止 SQL 注入），这是开发供大模型调用的后端接口时最核心的安全底线。
 
 ---
+
+
+### 2.4 原生 Function Calling (JSON Schema) 的结构化生成与调用逻辑
+> **目标**：抛开 LangChain 的 `@tool` 封装魔法，深入底层：让 Copilot 直接为您生成符合 OpenAI 官方极其繁琐规范的、带有严密参数约束的 JSON Schema 结构，以及拦截和执行工具回调的调度代码。
+
+**👨‍💻 用户输入的 Markdown 引导 Prompt**:
+```markdown
+帮我写一个基于原生 OpenAI API 规范的 Function Calling 定义和回调处理函数。
+功能：根据经纬度查询真实天气。
+要求：
+1. 提供完整的 JSON Schema 结构 (赋给 tools 数组)。
+2. 提供一个 Python 函数 `handle_tool_call(tool_call)`，用来拦截解析大模型的工具请求并执行。
+3. 加入详细的防呆防错处理机制。
+```
+
+**🤖 Copilot 自动补全生成的代码**:
+```python
+import json
+
+# 1. 大模型原生的 Function Calling 注入字典 (JSON Schema)
+weather_tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_current_weather",
+            "description": "获取指定经纬度地点的当前真实天气情况。绝不要在未获取确切坐标时猜测天气。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "latitude": {
+                        "type": "number",
+                        "description": "地点的纬度，例如 31.2304。必须为数字类型。"
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "description": "地点的经度，例如 121.4737。必须为数字类型。"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "enum": ["celsius", "fahrenheit"],
+                        "description": "温度单位。默认使用 celsius (摄氏度)。"
+                    }
+                },
+                "required": ["latitude", "longitude"]
+            }
+        }
+    }
+]
+
+# 2. 拦截并处理大模型的 Function Call 回调
+def handle_tool_call(tool_call):
+    """处理并执行大模型发出的工具调用请求 (Action)"""
+    if tool_call.function.name == "get_current_weather":
+        try:
+            # 框架层：解析大模型吐出的 JSON 参数字符串
+            arguments = json.loads(tool_call.function.arguments)
+            lat = arguments.get("latitude")
+            lon = arguments.get("longitude")
+            unit = arguments.get("unit", "celsius")
+            
+            print(f"🔧 拦截到 Function Call: 正在查询坐标 ({lat}, {lon}) 的天气...")
+            
+            # (在此执行真实的业务网络请求逻辑，如请求外部天气 API)
+            # mock_api_call(lat, lon)
+            
+            # 模拟返回成功数据
+            result = {"temperature": 25, "condition": "Sunny", "unit": unit}
+            
+            # 务必将其转为字符串并告知大模型
+            return json.dumps(result)
+            
+        except json.JSONDecodeError:
+            # 防呆 1：大模型吐出了破损的 JSON 格式
+            return json.dumps({"error": "工具参数解析失败：您提供的不是合法的 JSON 字符串。请修正后重试。"})
+        except Exception as e:
+            # 防呆 2：永远向模型返回错误字符串，触发它的自我反思，而不是让服务崩溃
+            return json.dumps({"error": f"API 内部调用失败：{str(e)}。请尝试使用其它方法或告知用户查询失败。"})
+    
+    return json.dumps({"error": f"未知的工具调用名称：{tool_call.function.name}"})
+```
+*💡 **最佳实践总结***：在底层开发中，原生 JSON Schema 的书写极其繁琐，极易遗漏 `required` 字段或者嵌套字典层级出错，导致 OpenAI 接口报错 `Invalid Schema`。利用 Copilot，你只需要用自然语言描述参数需求，它就能自动生成完美对齐规范的结构体，并附带最关键的异常捕获（如 `JSONDecodeError` 防御模型输出破损文本）的调度脚手架。
 
 ## 3. 高级架构师必读：高 Star 开源仓库与顶级参考文档
 
