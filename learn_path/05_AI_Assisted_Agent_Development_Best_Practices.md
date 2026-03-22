@@ -23,15 +23,17 @@
 **实操方法 (Copilot Prompt / 注释引导)**：
 在你的代码编辑器中，先写下你想要的工具的**业务逻辑注释**，然后按 `Tab` 键让 Copilot 生成带完美 Docstring 的函数。
 
-```python
-# [用户输入]: 
-# 这是一个获取用户订单的工具。
-# 要求：
-# 1. 加上 @tool 装饰器
-# 2. 必须包含 user_id (字符串) 和 limit (整型，默认5) 两个参数的严格类型注解
-# 3. 为函数加上极度详尽的、适合给大模型阅读的 Docstring（说明每个参数的用途和异常处理）
+**👨‍💻 用户输入的 Markdown 引导 Prompt**:
+```markdown
+这是一个获取用户订单的工具。
+要求：
+1. 加上 @tool 装饰器
+2. 必须包含 user_id (字符串) 和 limit (整型，默认5) 两个参数的严格类型注解
+3. 为函数加上极度详尽的、适合给大模型阅读的 Docstring（说明每个参数的用途和异常处理）
+```
 
-# [Copilot 自动补全生成]:
+**🤖 Copilot 自动补全生成的代码**:
+```python
 from langchain_core.tools import tool
 
 @tool
@@ -59,13 +61,14 @@ def get_user_orders(user_id: str, limit: int = 5) -> str:
 > **目标**：利用 Copilot 的结构化思维，生成防注入的系统级指令。
 
 **实操方法 (在代码或 Markdown 中引导)**：
-```xml
-<!-- [用户输入]:
+**👨‍💻 用户输入的 Markdown 引导 Prompt**:
+```markdown
 帮我用 XML 标签结构写一个“财务报表审计员”的 System Prompt。
 要求包含：Role(角色), Task(任务), Rules(3条绝对不可违背的红线防注入规则), Output Format(JSON格式要求)
--->
+```
 
-<!-- [Copilot 自动补全生成]: -->
+**🤖 Copilot 自动补全生成的结构化 Prompt**:
+```xml
 <System>
     <Role>你是一个冷酷、严谨、不苟言笑的高级财务报表审计员。</Role>
     
@@ -93,48 +96,37 @@ def get_user_orders(user_id: str, limit: int = 5) -> str:
 > **目标**：快速起一个合规、无状态且符合“最小权限原则”的 MCP 资源端点。
 
 **实操方法 (在服务端点代码中引导)**：
+**👨‍💻 用户输入的 Markdown 引导 Prompt**:
+```markdown
+这是一个获取用户订单的工具。
+要求：
+1. 加上 @tool 装饰器
+2. 必须包含 user_id (字符串) 和 limit (整型，默认5) 两个参数的严格类型注解
+3. 为函数加上极度详尽的、适合给大模型阅读的 Docstring（说明每个参数的用途和异常处理）
+```
+
+**🤖 Copilot 自动补全生成的代码**:
 ```python
-# [用户输入]:
-# 帮我写一个安全的、符合 Anthropic MCP 协议的 SQLite 查询工具。
-# 要求：
-# 1. 引入 mcp.server 的相关库
-# 2. 工具名为 get_user_balance
-# 3. 必须包含严格的参数校验（防止 SQL 注入），只允许查询，拒绝一切 DROP/UPDATE 操作。
+from langchain_core.tools import tool
 
-# [Copilot 自动补全生成]:
-from mcp.server.fastmcp import FastMCP
-import sqlite3
-
-# 创建无状态的 MCP Server 实例
-mcp = FastMCP("Finance_DB_Server")
-
-@mcp.tool()
-def get_user_balance(user_id: int) -> str:
+@tool
+def get_user_orders(user_id: str, limit: int = 5) -> str:
     """
-    查询指定用户的账户余额。只能用于数字类型的 user_id。
-    """
-    # 强校验：防止 SQL 注入
-    if not isinstance(user_id, int):
-        return "Error: user_id 必须是合法的整数"
+    当需要查询、获取或检索指定用户的历史订单记录时调用此工具。
+    绝对不要在未提供确切的 user_id 时猜测或调用。
+    
+    Args:
+        user_id (str): 用户的唯一系统标识符，通常以 'usr_' 开头。
+        limit (int, optional): 最多返回的订单数量。默认为 5。
         
+    Returns:
+        str: 返回一个包含订单详情的 JSON 字符串。如果数据库连接失败，将返回明确的错误提示。
+    """
     try:
-        # 使用安全的参数化查询，而非字符串拼接
-        conn = sqlite3.connect("finance.db")
-        cursor = conn.cursor()
-        cursor.execute("SELECT balance FROM users WHERE id = ?", (user_id,))
-        result = cursor.fetchone()
-        
-        if result:
-            return f"User {user_id} balance is: {result[0]}"
-        return f"Error: 未找到用户 {user_id}"
+        # (业务逻辑代码)
+        return fetch_orders_from_db(user_id, limit)
     except Exception as e:
-        return f"Error: 数据库查询失败 - {str(e)}"
-    finally:
-        conn.close()
-
-if __name__ == "__main__":
-    # 通过标准输入输出运行 MCP Server，与大模型客户端物理隔离
-    mcp.run()
+        return f"Error: 获取订单失败，错误详情为 {str(e)}。请提示用户稍后重试。"
 ```
 *💡 **最佳实践总结***：Copilot 会自动帮你补全异常捕获（`try-except-finally`）和参数化查询（防止 SQL 注入），这是开发供大模型调用的后端接口时最核心的安全底线。
 
