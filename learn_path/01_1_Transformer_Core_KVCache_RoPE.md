@@ -34,8 +34,8 @@ graph TD
 
     subgraph Decode [Decode 阶段:自回归逐字生成]
         E --> F[下一轮输入: 苹果]
-        F --> G(仅计算 "苹果" 的 Q, K, V)
-        G --> H{将 "苹果" 的 K, V 追加到 KV Cache}
+        F --> G(仅计算 苹果 的 Q, K, V)
+        G --> H{将 苹果 的 K, V 追加到 KV Cache}
         
         C -.-> I(读取历史 K, V)
         H -.-> I
