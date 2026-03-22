@@ -67,14 +67,14 @@ graph TD
 
 ```mermaid
 graph TD
-    subgraph S_GEN_1 [索引阶段 (Indexing)]
+    subgraph S_GEN_1
         A["长文档 (比如: 公司全员信)"] --> B["切分成大块 Parent Chunk (如: 薪酬调整章节)"]
         B --> C["进一步切分为小块 Child Chunks (句1, 句2, 句3)"]
         C --> D{"只把 Child Chunks 向量化存入 Vector DB"}
         B --> E{"将 Parent Chunk 存入文档数据库, 并建立父子映射"}
     end
 
-    subgraph S_GEN_2 [检索阶段 (Retrieval)]
+    subgraph S_GEN_2
         F["用户提问: 销售部门的底薪怎么调？"] --> G["向量检索比对"]
         G -. "命中相似度极高的小块" .-> H["Child Chunk 2: 销售底薪上涨10%"]
         H --> I["通过映射 ID，查找到完整的 Parent Chunk"]

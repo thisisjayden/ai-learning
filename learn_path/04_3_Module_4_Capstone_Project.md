@@ -17,20 +17,20 @@
 
 ```mermaid
 graph TD
-    subgraph S_GEN_1 [1. 离线训练流水线 (Training)]
+    subgraph S_GEN_1
         A["收集公司的私有通信协议代码片段"] --> B["整理成数百条 Instruction-Output JSON 对"]
         B --> C["LLaMA-Factory 启动!"]
         C --> D["配置 QLoRA (4-bit + Rank 16) 微调 Qwen-7B"]
         D --> E["炼丹成功：产出几十 MB 的 Adapter 权重文件"]
     end
 
-    subgraph S_GEN_2 [2. 高性能部署流水线 (Deployment)]
+    subgraph S_GEN_2
         E --> F["启动 vLLM 引擎进程"]
         F -. "挂载底座与私有 LoRA 补丁" .-> G["初始化 PagedAttention 显存池"]
         G --> H["暴露兼容 OpenAI 格式的高吞吐 API 端口"]
     end
 
-    subgraph S_GEN_3 [3. 在线调用与追踪流水线 (Inference & LLMOps)]
+    subgraph S_GEN_3
         I["员工提问: 帮我写一个内部服务的数据请求接口"] --> J["Agent 后端服务代码 (带有 @observe 装饰器)"]
         J --> K["使用 OpenAI SDK 指向本地 vLLM 端口发送请求"]
         K -. "毫秒级 Continuous Batching 响应" .-> J

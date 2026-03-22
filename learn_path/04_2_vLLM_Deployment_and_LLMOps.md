@@ -30,14 +30,14 @@ vLLM 的核心理念借用了操作系统管理虚拟内存的智慧：
 
 ```mermaid
 graph LR
-    subgraph S_GEN_1 [传统的 Static Batching]
+    subgraph S_GEN_1
         A["请求 1 (很长)"] --> B["等它生成完"]
         C["请求 2 (很短)"] --> B
         D["请求 3 (很短)"] --> B
         B --> E["必须三个都生成完，才释放这批显存接新客"]
     end
 
-    subgraph S_GEN_2 [vLLM 的 Continuous Batching]
+    subgraph S_GEN_2
         F["请求 1 (生成中)"] --> G["每个迭代 (Iteration) 都在动态调度"]
         H["请求 2 (已完成)"] --> G
         G -. "瞬间释放请求 2 的物理页" .-> I["新请求 4 插队进来参与运算"]

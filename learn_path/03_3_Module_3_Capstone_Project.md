@@ -18,19 +18,19 @@
 
 ```mermaid
 graph TD
-    subgraph S_GEN_1 [全局状态黑板 Global State]
+    subgraph S_GEN_1
         S["messages: 历史对话流, next: 下一个上场的人, sender: 刚刚发言的人"]
     end
 
-    subgraph S_GEN_2 [人类入口]
+    subgraph S_GEN_2
         User["老板派发 Instruction: 帮我写个 HackerNews 爬虫"]
     end
 
-    subgraph S_GEN_3 [Multi-Agent 路由枢纽]
+    subgraph S_GEN_3
         Supervisor{"👨💼 主管 Agent<br>(负责看上下文，决定下一步让谁干活，或者宣布任务 FINISH)"}
     end
 
-    subgraph S_GEN_4 [具有专属 Skills 的工人 Agents]
+    subgraph S_GEN_4
         Researcher["🕵️♂️ 调查员 Agent<br>Skills: Web_Search<br>目标: 搜寻外部 API 资料"]
         Coder["👨💻 程序员 Agent<br>Skills: File_Write, Python_Exec<br>目标: 编写代码并存盘运行"]
     end

@@ -51,13 +51,13 @@
 
 ```mermaid
 graph TD
-    subgraph S_GEN_1 [全参微调 Full Fine-Tuning]
+    subgraph S_GEN_1
         A["冻结的原模型巨大权重矩阵 (W)"] -->|正向传播| B["特征计算"]
         B -. "计算梯度，回传更新 W 本身" .-> A
         C["代价: 需要巨大的显存来保存几百亿个梯度的状态"]
     end
 
-    subgraph S_GEN_2 [LoRA 微调 Low-Rank Adaptation]
+    subgraph S_GEN_2
         D["彻底冻结的原模型权重矩阵 (W, 尺寸 dxk)"] -->|正向传播| E["特征提取 1"]
         
         F["旁路矩阵 A (尺寸 dxr)"] -->|降维| G["极小特征流"]

@@ -81,12 +81,12 @@
 
 ```mermaid
 graph TD
-    subgraph S_GEN_1 [上层业务输入]
+    subgraph S_GEN_1
         A["Instruction (任务指令): 帮我查一下今天苹果公司的股价并写一份简报"]
         B["Agent Persona (人设基座): 你是一个严谨的金融分析师"]
     end
 
-    subgraph S_GEN_2 [中间件系统架构 Agent Client]
+    subgraph S_GEN_2
         C["Agent 控制枢纽"]
         
         A --> C
@@ -97,7 +97,7 @@ graph TD
         D -->|提取技能 Schema| C
     end
 
-    subgraph S_GEN_3 [独立的 MCP Server 生态]
+    subgraph S_GEN_3
         E["外部 MCP Server (如: 财经数据接口进程)"]
         E1["工具: Web_Search_Tool"] -.-> E
         E2["资源: 历史财报 PDF"] -.-> E
@@ -105,7 +105,7 @@ graph TD
         E <== "动态暴露 Tools/Resources Schema 并执行调用" ==> C
     end
 
-    subgraph S_GEN_4 [底层大模型 Function Calling]
+    subgraph S_GEN_4
         C -->|将人设、指令、所有本地与 MCP 技能的 JSON Schema 编译发送| F["Prompt + Tools Schema"]
         F --> G["LLM (大语言模型)"]
         G --> H["Function Calling: 放弃输出纯文本, 转而输出 {name: Web_Search, args: {query: 苹果股价}}"]

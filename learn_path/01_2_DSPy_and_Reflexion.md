@@ -31,14 +31,14 @@ prompt = f"你是一个优秀的客服，请回答用户关于{product}的问题
 
 ```mermaid
 graph TD
-    subgraph Traditional [传统开发模式 (玄学调参)]
+    subgraph Traditional
         A["人类写长篇 Prompt"] --> B["喂给 LLM"]
         B --> C["人工抽查 5 个问题看效果"]
         C --> D{"如果不满意"}
         D -. "手动修改某个词汇" .-> A
     end
 
-    subgraph DSPy [DSPy 框架模式 (工程化编译)]
+    subgraph DSPy
         E["定义 Signature: Question -> Answer"] --> F["准备少量测试集 Dataset"]
         F --> G["启动 Teleprompter 优化器"]
         G --> H{"DSPy 自动用大模型生成并尝试数十种 Prompt 变体"}
