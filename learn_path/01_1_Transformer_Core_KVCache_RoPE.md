@@ -79,8 +79,34 @@ $$ \text{Size} = 2 \times 2 \times \text{layers} \times \text{hidden\_size} \tim
 - **绝对位置编码**：直接把“这是第1个词”、“这是第2个词”的数字编码加到向量里。缺点：无法理解词与词之间的“相对距离”。
 - **相对位置编码**：计算量大，且和 KV Cache 结合时工程实现复杂。
 
+
 ### 3.2 RoPE 的数学直觉：在复数域中旋转
+
+> **原理解析图：通过旋转向量实现相对位置编码**
+```mermaid
+graph LR
+    subgraph 位置 3 的 Query (Q)
+        A(获取词向量 Q) --> B[乘以复数进行顺时针旋转 30°]
+        B --> C((Q_rot: 带有绝对位置信息的 Q))
+    end
+    
+    subgraph 位置 5 的 Key (K)
+        D(获取词向量 K) --> E[乘以复数进行顺时针旋转 50°]
+        E --> F((K_rot: 带有绝对位置信息的 K))
+    end
+    
+    C --> G{计算 Attention: Q_rot 和 K_rot 的内积}
+    F --> G
+    
+    G --> H[数学等价于原始 Q 和 K 的内积, 再乘以 20° 的相对旋转差值!]
+    H --> I[模型成功感知到这两个词相差 2 个位置]
+    
+    classDef highlight fill:#f9f,stroke:#333,stroke-width:2px;
+    class G highlight;
+```
+
 RoPE 的核心思想是：**通过在复数平面上“旋转”词向量来注入绝对位置信息，而这两个词向量做内积（算注意力）时，神奇地只与它们的“相对位置（旋转角度的差值）”有关。**
+
 
 举个不严谨但好懂的例子：
 1. 词向量是一根指针。
