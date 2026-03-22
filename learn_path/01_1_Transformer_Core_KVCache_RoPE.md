@@ -159,8 +159,41 @@ def simple_autoregressive_generation_with_kv_cache(prompt_tokens, max_new_tokens
         
     return generated_tokens
 
+
 # 注意：真实的计算在 GPU 上是通过张量矩阵并发运算的，这里为了展示原理写成 for 循环
 ```
+
+### 4.1 如何调用与运行效果
+
+为了验证 KV Cache 的实际效果，我们可以写一个简单的测试脚本，对比“不使用 Cache”和“使用 Cache”时所需计算的 Token 数量：
+
+```python
+# 假设我们输入了一句包含 7 个 Token 的 Prompt
+prompt = ["我", "今天", "去", "买了", "一", "个", "苹果"]
+max_tokens_to_generate = 3
+
+print("--- 开始使用 KV Cache 生成 ---")
+# 调用我们刚才写的函数
+output = simple_autoregressive_generation_with_kv_cache(prompt, max_tokens_to_generate)
+print(f"\n最终生成结果: {prompt} + {output}")
+```
+
+**预期的输出效果与原理解释：**
+```text
+--- 开始使用 KV Cache 生成 ---
+[Prefill 阶段] 正在一次性并行计算 7 个 Token 的 QKV，并存入 KV Cache...
+[Decode 阶段 - 第 1 步] 仅计算【苹果】的 QKV，从 Cache 读取历史 7 个 KV，生成 -> "，"
+[Decode 阶段 - 第 2 步] 仅计算【，】的 QKV，从 Cache 读取历史 8 个 KV，生成 -> "非"
+[Decode 阶段 - 第 3 步] 仅计算【非】的 QKV，从 Cache 读取历史 9 个 KV，生成 -> "常"
+
+最终生成结果: ['我', '今天', '去', '买了', '一', '个', '苹果'] + ['，', '非', '常']
+```
+
+**效果总结：**
+如果**不使用 KV Cache**，生成这 3 个词，我们需要在底层分别计算：`7个词` + `8个词` + `9个词` = **24 次 QKV 矩阵乘法**。
+如果**使用了 KV Cache**，我们只需要计算：`7个词(Prefill)` + `1个词` + `1个词` + `1个词` = **10 次 QKV 矩阵乘法**。
+随着生成的文本越来越长，KV Cache 省下的计算量将是指数级的！
+
 
 ---
 > **小结**：掌握了 KV Cache 和 RoPE，你就拿到了理解大模型推理性能调优（vLLM）和长文本拓展（Long Context）的钥匙。下一节我们将进入 Prompt 架构化的精讲：DSPy 与自我反思机制。
